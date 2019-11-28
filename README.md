@@ -1,0 +1,2 @@
+# pyThePlot
+ThePlotFMRI allows to create a figure summarizing a functional data set as Jonathan Power introduced it in 2017. The fMRI data set is assumed to be preprocessed with SPM. The functional file and some pre-processed files are mandatory to run this script. More info on how to pre-process functional files at https://www.fmrwhy.com/2018/07/20/the-plot-spm/. This script performs the plotting only, not the pre-processing.

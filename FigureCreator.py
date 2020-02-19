@@ -4,10 +4,10 @@ import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
-from utils import checkFileExists
+from .utils import checkFileExists
 
 #Value for the carpet plot colorbar range : [-PSC_MIN_MAX, +PSC_MIN_MAX]
-from config import PSC_MIN_MAX
+from .config import PSC_MIN_MAX
 # Tissue names
 TISSUE_NAMES = ['GM','WM','CSF']
 # Parameters for the Figure

@@ -5,14 +5,14 @@ More info on how to pre-process functional files at https://www.fmrwhy.com/2018/
 This script performs the plotting only, not the pre-processing.
 
 Usage:
-  thePlotFMRI.py (-f <fmri_file>) (-r <rp_file>) (-g <rc1_file>) (-w <rc2_file>) (-c <rc3_file>) [-o <out_file>] [-p <P>] [-t <title>]
+  thePlotFMRI.py (-f <fmri_file>)... (-r <rp_file>)... (-g <rc1_file>) (-w <rc2_file>) (-c <rc3_file>) [-o <out_file>] [-p <P>] [-t <title>]
   thePlotFMRI.py -h | --help
 
 Options:
   -h --help            Show this help message
   --version            Show version
   Required inputs
-  -f, --fmri           Path to functional data set ("bold_run1.nii.gz")
+  -f, --fmri           Path to functional data set ("bold_run1.nii.gz") (can be called as many times as runs)
   -r, --realparams     Path to the realignment parameters file ("rp_bold_run1.txt")
   -g, --rgm            Path to the resliced (to fmri space) GM  segmentation map ("rc1_T1w.nii.gz")
   -w, --rwm            Path to the resliced (to fmri space) WM  segmentation map ("rc2_T1w.nii.gz")
@@ -30,12 +30,13 @@ matplotlib.use('Agg') #useful for no display environment, in a remote session fo
 import numpy as np
 import numpy.matlib
 import nibabel as nib
+import sys
 import matplotlib.pyplot as plt
 from os.path import exists as ope, join as opj, basename as opb
 from matplotlib.gridspec import GridSpec
-from FigureCreator import CarpetFigureCreator, TISSUE_NAMES
-from utils import checkFileExists
-from config import PSC_MIN_MAX
+from .FigureCreator import CarpetFigureCreator, TISSUE_NAMES
+from .utils import checkFileExists
+from .config import PSC_MIN_MAX
 
 DEFAULT_OUT_FILE = 'thePlotFMRI_default.png'
 
@@ -372,8 +373,8 @@ class ThePlot:
             self.sliceIndex = si
         else:
             self.setDefaultSliceIndex()
-            print "The slice index must be between 0 and {0} while you provided {1}. " \
-                  "Default index is chosen (middle z-slice : {2})".format(self.Nk, si,self.sliceIndex)
+            print("The slice index must be between 0 and {0} while you provided {1}. " \
+                  "Default index is chosen (middle z-slice : {2})".format(self.Nk, si,self.sliceIndex))
 
     def plot(self, output_file='',title='',psc_min_max=PSC_MIN_MAX):
         """
@@ -391,7 +392,7 @@ class ThePlot:
         if len(self.vols_to_highlight):
             cfc.setVolumesToHighlight(self.vols_to_highlight)
         cfc.plot(output_file=output_file,psc_min_max=psc_min_max)
-        print '\t- SingleRun Plot : ' + opb(output_file) + ' saved'
+        print('\t- SingleRun Plot : ' + opb(output_file) + ' saved')
 
     def generateTimeseriesPSCSnapViews(self,out_dir,nCols,nRows,title='',basename='psc_img',psc_min_max=PSC_MIN_MAX):
         """
@@ -625,7 +626,7 @@ class ThePlotMultipleRuns:
             cpc.setVolumesToHighlight(self.volsForPlot)
         cpc.setTitle(title=title) #Set supra title
         cpc.plot(output_file=output_file) #Plot and save the figure
-        print '\t- MultiRuns Plot : ' + opb(output_file) + ' saved'
+        print('\t- MultiRuns Plot : ' + opb(output_file) + ' saved')
 
 
 #######################################################################################################################
@@ -641,29 +642,37 @@ if __name__ == '__main__':
     rwm_fn = args['<rc2_file>']   # Resliced WM segmentation file
     rcsf_fn = args['<rc3_file>']  # Resliced CSF segmentation file
 
-    print args
-
     if args['--out']:
         out_file = args['--out'] # Output file (graph) saved as an image
     else:
         out_file = DEFAULT_OUT_FILE
-        print "[thePlotFMRI.py] Argument -o was not defined, the default output file '{0}' is being used".format(out_file)
+        print("[thePlotFMRI.py] Argument -o was not defined, the default output file '{0}' is being used".format(out_file))
 
     if not ope(out_file):
         # From here, everything should be automated
         # --------------------------------------------------
         # Create Instance of the class 'The Plot'
-        tp = ThePlot()
-        # Set the data
-        tp.setFunctionalData(fmri_fn)
-        tp.setMovementParameterFile(rp_fn)
-        tp.setReslicedGM(rgm_fn)
-        tp.setReslicedWM(rwm_fn)
-        tp.setReslicedCSF(rcsf_fn)
-        # Generates the figure
-        tp.plot(out_file,title=args['--title'],psc_min_max=float(args['--psc']))
+        if len(fmri_fn)==1:
+            tp = ThePlot()
+            # Set the data
+            tp.setFunctionalData(fmri_fn[0])
+            tp.setMovementParameterFile(rp_fn[0])
+            tp.setReslicedGM(rgm_fn)
+            tp.setReslicedWM(rwm_fn)
+            tp.setReslicedCSF(rcsf_fn)
+            # Generates the figure
+            tp.plot(out_file,title=args['--title'],psc_min_max=float(args['--psc']))
+        else:
+            if len(fmri_fn) == len(rp_fn):
+                tpmr = ThePlotMultipleRuns()
+                tpmr.setListRuns(fmri_fn)
+                tpmr.setListMovementFiles(rp_fn)
+                tpmr.setReslicedSegmentationFiles(rgm_fn, rwm_fn, rcsf_fn)
+                tpmr.plot(output_file=out_file,title=args['--title'])
+            else:
+                sys.exit("Error, you must provide the same number of -f (here {0}) and -r (here {1}) options".format(len(fmri_fn),len(rp_fn)))
     else:
-        print "[thePlotFMRI.py] output file already exists : {0}".format(out_file)
+        print("[thePlotFMRI.py] output file already exists : {0}".format(out_file))
 
     # Example : setting the inputs in several ways
     # ----------------------------------------------------------------------------------------------

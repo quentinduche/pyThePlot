@@ -34,9 +34,9 @@ import sys
 import matplotlib.pyplot as plt
 from os.path import exists as ope, join as opj, basename as opb
 from matplotlib.gridspec import GridSpec
-from .FigureCreator import CarpetFigureCreator, TISSUE_NAMES
-from .utils import checkFileExists
-from .config import PSC_MIN_MAX
+from FigureCreator import CarpetFigureCreator, TISSUE_NAMES
+from utils import checkFileExists
+from config import PSC_MIN_MAX
 
 DEFAULT_OUT_FILE = 'thePlotFMRI_default.png'
 
